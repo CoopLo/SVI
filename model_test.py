@@ -1,4 +1,4 @@
-import hmm
+#import hmm
 import numpy as np
 from numpy import random as rand
 from numpy.random import normal
@@ -6,6 +6,7 @@ import pandas as pd
 import helper_funcs as hf
 import hmmsvi
 from pybasicbayes.distributions import gaussian
+import matplotlib
 from matplotlib import  pyplot as plt
 
 debug = True
@@ -67,12 +68,28 @@ model = hmmsvi.SVIHMM(prior_init = prior_init,
 # try generating before svi step
 obs_seq = model.generate_obs(single_stock[train_size:].shape[0])
 
-print(obs_seq[0])
-print(obs_seq[1].shape)
+# plotting
+plt.style.use('ggplot')
+matplotlib.rcParams.update({'font.size': 13})
+fig = plt.figure(figsize=(8,8))
 
-plt.subplot(211)
-plt.plot(single_stock[train_size:])
-plt.subplot(212)
-plt.plot(obs_seq[1])
+ax = fig.add_subplot(111)
+ax1 = fig.add_subplot(211)
+ax2 = fig.add_subplot(212)
+
+# Turn off axis lines and ticks of the big subplot
+ax.spines['top'].set_color('none')
+ax.spines['bottom'].set_color('none')
+ax.spines['left'].set_color('none')
+ax.spines['right'].set_color('none')
+ax.tick_params(labelcolor='w', top='off', bottom='off', left='off', right='off')
+
+ax.set_xlabel("Minute")
+ax.set_ylabel("Stock Price")
+
+ax1.set_title("Actual Stock Data")
+ax1.plot(single_stock[train_size:], 'b')
+ax2.set_title("SVI-fitted HMM Model Output")
+ax2.plot(obs_seq[1], 'k')
 plt.show()
 
