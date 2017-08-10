@@ -102,6 +102,6 @@ ax.set_ylabel("Stock Price")
 ax1.set_title("Actual Stock Data")
 ax1.plot(single_stock[train_size:], 'b')
 ax2.set_title("SVI-fitted HMM Model Output")
-ax2.plot(obs_seq[1], 'k')
+ax2.plot(post_obs_seq[1], 'k')
 plt.show()
 
