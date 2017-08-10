@@ -1,3 +1,5 @@
+# follows tutorial here: http://machinelearningmastery.com/time-series-prediction-with-deep-learning-in-python-with-keras/
+
 import pandas as pd #data manipulation
 import keras as ks #machine learning
 from keras.layers import Dense
