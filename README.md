@@ -10,7 +10,7 @@ training_particular_stock.py is a keras model being used to model stock prices, 
 
 Dependencies: cython, pybasicbayes, numpy, pandas
 
-Currently: I got the error that numpy couldn't do the cholesky decomposition on the variance of the gaussian emmissions because it was not a matrix (and definitely not a hermitian positive definite matrix), just a float. I got around this by throwing the variance in some brackets to make it a 1x1 2D matrix. The output is garbage so far because no inference step has been performed.
+Currently: I got the error that numpy couldn't do the cholesky decomposition on the variance of the gaussian emmissions because it was not a matrix (and definitely not a hermitian positive definite matrix), just a float. I got around this by throwing the variance in some brackets to make it a 1x1 2D matrix. The output is garbage so far because no inference step has been performed. I am debugging the inference step. For whatever reason in pybasicbayes.distributions.gaussian.py some parameters are not being updated properly.
 
 # SVI Model Output vs. Actual Stock Data
 ![svi_output](https://user-images.githubusercontent.com/17442830/29154144-f8bd8bfa-7d57-11e7-8b29-ffb08ed9f72a.png)
