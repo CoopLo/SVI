@@ -1,7 +1,7 @@
 ## SVI
 Implementation of the algorithm outlined here: http://proceedings.mlr.press/v32/johnson14.pdf. Specifically using stochastic variational inference to fit a hidden markov model to minute level stock data.
 
-I am currently trying the code found here: https://github.com/dillonalaird/pysvihmm 
+I am currently trying the code found here: https://github.com/dillonalaird/pysvihmm. In pysvihmm.hmmbase, I commented out line 16: import cPickle as pkl because it is not used anywhere and I didn't want to bother with installing cPickle. I also found that compiling the cython files did not work using the command given in the README so I added "import pyximport; pyximport.install(), modified line 26 to be: import pysvihmm.hmm_fast as hmm_fast and modified line 27 to be: import pysvihmm.util as util
 
 Some of the formatting is off because I use 3 space tabs in vim and github doesn't like that.
 
