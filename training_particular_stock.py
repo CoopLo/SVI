@@ -124,7 +124,6 @@ def learn_stock(stock_data, stock_index):
     # plot baseline and predictions
     plt.style.use('ggplot') 
     fig = plt.figure(figsize=(8,17))
-    fig.suptitle("Data")
     ax = plt.subplot("511")
     ax.set_title('Original Data')
     ax.plot(data, 'b')
@@ -142,7 +141,5 @@ def learn_stock(stock_data, stock_index):
     ax.set_title('Difference (Original-1 vs. Trained Data)')
     plt.plot(shifted_difference, 'c')
     plt.show()
-    print(trainScore)
-    print(testScore)
     
 learn_stock(stock_data, 400)
