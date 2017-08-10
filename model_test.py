@@ -68,6 +68,18 @@ model = hmmsvi.SVIHMM(prior_init = prior_init,
 # try generating before svi step
 obs_seq = model.generate_obs(single_stock[train_size:].shape[0])
 
+# inference step needs minibatches of data. Make them here.
+minibatches = np.ndarray((int(train_size/10), 10))
+for i in range(int(train_size/10)):
+	for j in range(10):
+		minibatches[i][j] = train_set[10*i + j]
+
+# inference step
+model.infer(minibatches)
+
+# generating observation sequence after svi step
+post_obs_seq = model.generate_obs(single_stock[train_size:].shape[0])
+
 # plotting
 plt.style.use('ggplot')
 matplotlib.rcParams.update({'font.size': 13})
