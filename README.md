@@ -11,5 +11,4 @@ Currently: I got the error that numpy couldn't do the cholesky decomposition on 
 ![svi_output](https://user-images.githubusercontent.com/17442830/29154144-f8bd8bfa-7d57-11e7-8b29-ffb08ed9f72a.png)
 
 # Keras Model Output vs. Actual Stock Data
-![keras_output](https://user-images.githubusercontent.com/17442830/29149730-ab502600-7d3b-11e7-9096-41b3cb339b55.png)
-
+![keras_output](https://user-images.githubusercontent.com/17442830/29154335-67e9913a-7d59-11e7-9032-5b65b556e62f.png)
