@@ -94,7 +94,7 @@ class SVIHMM(VariationalHMMBase):
     def update_lrate(self,it):
         pass
 
-    def infer(self, mb_gen, maxit=2):
+    def infer(self, mb_gen, maxit=10):
         """ Runs stochastic variational inference algorithm. This works with
             only a subset of the data.
 
