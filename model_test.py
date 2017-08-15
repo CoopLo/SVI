@@ -58,10 +58,6 @@ prior_emit = [gaussian.Gaussian(mu=mu, sigma=sigma),
 				gaussian.Gaussian(mu=mu, sigma=sigma),
 				gaussian.Gaussian(mu=mu, sigma=sigma),
 				gaussian.Gaussian(mu=mu, sigma=sigma)]
-print("Fucking hopefully")
-print(type(prior_emit[0]))
-print(prior_emit[0].sigma_0)
-print(prior_emit[0].sigma_mf)
 
 # do the model
 model = hmmsvi.SVIHMM(prior_init = prior_init,
