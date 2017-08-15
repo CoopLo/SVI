@@ -19,7 +19,7 @@ stock_symbols = hf.get_stock_symbols(stock_data)
 single_stock = hf.stock_data_in_one_line(stock_data, stock_symbols, 400)
 
 # break up stock data into train and test sets
-train_size = int(0.5*single_stock.size)
+train_size = int(0.1*single_stock.size)
 train_set = np.asarray(single_stock[:train_size])
 test_set = np.asarray(single_stock[train_size:])
 
@@ -58,6 +58,10 @@ prior_emit = [gaussian.Gaussian(mu=mu, sigma=sigma),
 				gaussian.Gaussian(mu=mu, sigma=sigma),
 				gaussian.Gaussian(mu=mu, sigma=sigma),
 				gaussian.Gaussian(mu=mu, sigma=sigma)]
+print("Fucking hopefully")
+print(type(prior_emit[0]))
+print(prior_emit[0].sigma_0)
+print(prior_emit[0].sigma_mf)
 
 # do the model
 model = hmmsvi.SVIHMM(prior_init = prior_init,
@@ -67,6 +71,7 @@ model = hmmsvi.SVIHMM(prior_init = prior_init,
 
 # try generating before svi step
 obs_seq = model.generate_obs(single_stock[train_size:].shape[0])
+#print(obs_seq[1])
 
 # inference step needs minibatches of data. Make them here.
 minibatches = np.ndarray((int(train_size/10), 10))
@@ -79,6 +84,8 @@ model.infer(minibatches)
 
 # generating observation sequence after svi step
 post_obs_seq = model.generate_obs(single_stock[train_size:].shape[0])
+print(post_obs_seq[0])
+print(post_obs_seq[1])
 
 # plotting
 plt.style.use('ggplot')
@@ -86,8 +93,9 @@ matplotlib.rcParams.update({'font.size': 13})
 fig = plt.figure(figsize=(8,8))
 
 ax = fig.add_subplot(111)
-ax1 = fig.add_subplot(211)
-ax2 = fig.add_subplot(212)
+ax1 = fig.add_subplot(311)
+ax2 = fig.add_subplot(312)
+ax3 = fig.add_subplot(313)
 
 # Turn off axis lines and ticks of the big subplot
 ax.spines['top'].set_color('none')
@@ -101,7 +109,9 @@ ax.set_ylabel("Stock Price")
 
 ax1.set_title("Actual Stock Data")
 ax1.plot(single_stock[train_size:], 'b')
-ax2.set_title("SVI-fitted HMM Model Output")
-ax2.plot(post_obs_seq[1], 'k')
+ax2.set_title("SVI-non-fitted HMM Model Output")
+ax2.plot(obs_seq[1], 'k')
+ax3.set_title("SVI-fitted HMM model Output")
+ax3.plot(post_obs_seq[1], 'g')
 plt.show()
 
