@@ -72,6 +72,8 @@ class SVIHMM(VariationalHMMBase):
         self.var_init = prior_init.copy()
         self.var_tran = prior_tran.copy()
         self.var_emit = prior_emit.copy()
+        print("sigma_mf after initialization")
+        print(self.var_emit[0].sigma_mf)
 
 
         # We can't set these up until we know the size of a minibatch, M.
@@ -87,12 +89,12 @@ class SVIHMM(VariationalHMMBase):
     def allobs_batch(self):
         """ Generator with one entry that iterates over all observations.
         """
-        yield xrange(self.T)
+        yield range(self.T)
     
     def update_lrate(self,it):
         pass
 
-    def infer(self, mb_gen, maxit=100):
+    def infer(self, mb_gen, maxit=2):
         """ Runs stochastic variational inference algorithm. This works with
             only a subset of the data.
 
@@ -105,10 +107,22 @@ class SVIHMM(VariationalHMMBase):
 
         for it in range(maxit):
             # Sample minibatches
-
+            print(it)
+            #print(mb_gen.size/10)
+            progress_bar = ["[          ]"]
+            i = 0
             for batch in mb_gen:
+                #print("sigma_mf before anything")
+                #print(self.var_emit[0].sigma_mf)
                 self.local_update(batch)
                 self.global_update(batch)
+
+                #print(int(i/(mb_gen.size/10)+1))
+                #print("Iteration: " + str(it), '\r')
+                #print(str(progress_bar), '\r')
+                #if(i%(mb_gen.size/10) == 0):
+                    #progress_bar[int(i/(mb_gen.size/10)+1)] = "X"
+                #i += 1
 
     # This must be implemented from hmmbase
     def global_update(self, batch=None):
@@ -135,16 +149,16 @@ class SVIHMM(VariationalHMMBase):
         for k in range(self.K):
 
             # Convert current estimate to natural params
-            nats_old = np.squash(self.var_tran[k,:] - 1.)
+            nats_old = np.squeeze(self.var_tran[k,:] - 1.)
 
             # Mean-field update
             # Can we move this outside of the for-loop?
             tran_mf = self.prior_tran.copy()
-            for t in xrange(1, self.T):
-                tran_mf += np.outer(self.var_x[t-1,:], self.var_x[t,:])
+            for t in range(1, self.T):
+                tran_mf += np.outer(self.var_x[:,t-1], self.var_x[:,t])
 
             # Convert result to natural params
-            nats_t = np.squash(tran_mf[k,:] - 1.)
+            nats_t = np.squeeze(tran_mf[k,:] - 1.)
 
             # Perform update according to stochastic gradient
             # (Hoffman, pg. 17)
@@ -154,27 +168,42 @@ class SVIHMM(VariationalHMMBase):
             self.var_tran[k,:] = nats_new + 1.
 
         # Emission distributions
+        #print("After transition distributions")
+        #print(self.var_emit[1].sigma)
         for k in range(self.K):
+            #print(self.var_emit[k].sigma_mf)
             G = self.var_emit[k]
+            #print(G.sigma_mf)
 
             # Do mean-field update for this component
             mu_mf, sigma_mf, kappa_mf, nu_mf = \
-                util.NIW_meanfield(G, batch, self.var_x[:,k])
+                pysvihmm.util.NIW_meanfield(G, batch, self.var_x[:,k])
+
+            #print("SIGMA_MF")
+            #print(sigma_mf)
 
             # Convert to natural parameters
-            nats_t = util.NIW_mf_natural_pars(mu_mf, sigma_mf,
+            nats_t = pysvihmm.util.NIW_mf_natural_pars(mu_mf, sigma_mf,
                                                 kappa_mf, nu_mf)
+            #print("nats_t :" + str(nats_t))
 
             # Convert current estimates to natural parameters
-            nats_old = util.NIW_mf_natural_pars(G.mu_mf, G.sigma_mf,
+            nats_old = pysvihmm.util.NIW_mf_natural_pars(G.mu_mf, G.sigma_mf,
                                                 G.kappa_mf, G.nu_mf)
+            #print("nats_old :" + str(nats_old))
 
             # Perform update according to stochastic gradient
             # (Hoffman, pg. 17)
             nats_new = (1.-lrate)*nats_old + lrate*nats_t
+            #print(nats_new)
 
             # Convert new params into moment form and store back in G
-            util.NIW_mf_moment_pars(G, *nats_new)
+            pysvihmm.util.NIW_mf_moment_pars(G, *nats_new)
+            #print("After storing back into G")
+            #print(self.var_emit[0].sigma)
+
+        #print("After emission distributions")
+        #print(self.var_emit[0].sigma)
 
     def generate_obs(self, T):
         """ generate_obs will generate T observations using the prior
