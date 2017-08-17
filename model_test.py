@@ -12,14 +12,14 @@ from matplotlib import  pyplot as plt
 debug = True
 components = 4
 mixtures = 5
-
+index = 400
 # read in data
 stock_data = pd.read_csv("../data/mquote201010.csv")
 stock_symbols = hf.get_stock_symbols(stock_data)
-single_stock = hf.stock_data_in_one_line(stock_data, stock_symbols, 400)
+single_stock = hf.stock_data_in_one_line(stock_data, stock_symbols, index)
 
 # break up stock data into train and test sets
-train_size = int(0.1*single_stock.size)
+train_size = int(0.05*single_stock.size)
 train_set = np.asarray(single_stock[:train_size])
 test_set = np.asarray(single_stock[train_size:])
 
@@ -38,33 +38,34 @@ mu = np.asarray([np.mean(single_stock)])
 sigma = np.var(single_stock)**0.5
 #print(sigma.shape)
 obs_params = np.array([normal(loc=mu, scale=sigma, size=5),
-									normal(loc=mu, scale=sigma, size=5),
-									normal(loc=mu, scale=sigma, size=5),
-									normal(loc=mu, scale=sigma, size=5),
-									normal(loc=mu, scale=sigma, size=5)])
+                       normal(loc=mu, scale=sigma, size=5),
+                       normal(loc=mu, scale=sigma, size=5),
+                       normal(loc=mu, scale=sigma, size=5),
+                       normal(loc=mu, scale=sigma, size=5)])
 	
 # pi[0] is initial state distribution
-prior_tran = np.asarray(([1, 1, 1, 1, 1],
-					[1, 1, 1, 1, 1],
-					[1, 1, 1, 1, 1],
-					[1, 1, 1, 1, 1],
-					[1, 1, 1, 1, 1]))
+prior_tran = np.asarray(([1, 0, 0, 0, 0],
+               [0, 1, 0, 0, 0],
+               [0, 0, 1, 0, 0],
+               [0, 0, 0, 1, 0],
+               [0, 0, 0, 0, 1]))
 
 sigma = [[sigma]]
 
 # prior emissions are gaussian
 prior_emit = [gaussian.Gaussian(mu=mu, sigma=sigma),
-				gaussian.Gaussian(mu=mu, sigma=sigma),
-				gaussian.Gaussian(mu=mu, sigma=sigma),
-				gaussian.Gaussian(mu=mu, sigma=sigma),
-				gaussian.Gaussian(mu=mu, sigma=sigma)]
+              gaussian.Gaussian(mu=mu, sigma=sigma),
+              gaussian.Gaussian(mu=mu, sigma=sigma),
+              gaussian.Gaussian(mu=mu, sigma=sigma),
+              gaussian.Gaussian(mu=mu, sigma=sigma)]
 
 # do the model
 model = hmmsvi.SVIHMM(prior_init = prior_init,
-					prior_tran = prior_tran,
-					prior_emit = prior_emit,
-					obs = single_stock[:train_size])
+                      prior_tran = prior_tran,
+                      prior_emit = prior_emit,
+                      obs = single_stock[:train_size])
 
+print(hasattr(model, "var_tran"))
 # try generating before svi step
 obs_seq = model.generate_obs(single_stock[train_size:].shape[0])
 #print(obs_seq[1])
@@ -72,11 +73,18 @@ obs_seq = model.generate_obs(single_stock[train_size:].shape[0])
 # inference step needs minibatches of data. Make them here.
 minibatches = np.ndarray((int(train_size/10), 10))
 for i in range(int(train_size/10)):
-	for j in range(10):
-		minibatches[i][j] = train_set[10*i + j]
+    for j in range(10):
+        minibatches[i][j] = train_set[10*i + j]
 
 # inference step
-model.infer(minibatches)
+print(type(model))
+model.infer(minibatches, maxit=1)
+print("prior_emit: " + str(model.prior_emit))
+print("prior_tran: " + str(model.prior_tran))
+print("prior_init: " + str(model.prior_init))
+print("var_emit: " + str(model.var_emit))
+print("var_tran: " + str(model.var_tran))
+print("var_init: " + str(model.var_init))
 
 # generating observation sequence after svi step
 post_obs_seq = model.generate_obs(single_stock[train_size:].shape[0])
