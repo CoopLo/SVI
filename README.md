@@ -9,7 +9,19 @@ training_particular_stock.py is a keras model being used to model stock prices, 
 
 Dependencies: cython, pybasicbayes, numpy, pandas
 
-My current issue is that var_tran will not update in the global inference step, no matter what I do to it. This caused the output of the fitted model to be garbage. Lines 173-178 in hmmsvi.py, specifically. I left some of the debugging stuff in various files because it is still useful for me.
+My current issue is that var_tran will not update in the global inference step, no matter what I do to it. This caused the output of the fitted model to be garbage. Lines 173-178 in hmmsvi.py, specifically. I left some of the debugging stuff in various files because it is still useful for me. Here's the output I'm getting: 
+
+element before assignment: 0
+it should be: 0.919
+True
+element after assignment: 0
+
+
+element before assignment: 0
+it should be: 0.919
+True
+element after assignment: 0
+
 
 # SVI Model Output vs. Actual Stock Data
 ![more_svi_output](https://user-images.githubusercontent.com/17442830/29325099-2a908f58-81ac-11e7-804c-7ea291977f13.png)
