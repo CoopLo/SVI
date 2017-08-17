@@ -16,7 +16,6 @@ it should be: 0.919
 True
 element after assignment: 0
 
-
 element before assignment: 0
 it should be: 0.919
 True
