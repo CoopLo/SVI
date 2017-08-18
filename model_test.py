@@ -19,7 +19,7 @@ stock_symbols = hf.get_stock_symbols(stock_data)
 single_stock = hf.stock_data_in_one_line(stock_data, stock_symbols, index)
 
 # break up stock data into train and test sets
-train_size = int(0.05*single_stock.size)
+train_size = int(0.01*single_stock.size)
 train_set = np.asarray(single_stock[:train_size])
 test_set = np.asarray(single_stock[train_size:])
 
@@ -72,6 +72,7 @@ obs_seq = model.generate_obs(single_stock[train_size:].shape[0])
 
 # inference step needs minibatches of data. Make them here.
 minibatches = np.ndarray((int(train_size/10), 10))
+print(train_size)
 for i in range(int(train_size/10)):
     for j in range(10):
         minibatches[i][j] = train_set[10*i + j]
