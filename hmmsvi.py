@@ -1,5 +1,5 @@
 #from __future__ import division
-from pympler import tracker, muppy
+#from pympler import tracker, muppy
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -70,9 +70,9 @@ class SVIHMM(VariationalHMMBase):
 
         # Set the variaitonal hyperparameters, initialized as the
         # hyperparameters input into the model
-        self.var_init = prior_init.copy()
-        self.var_tran = prior_tran.copy()
-        self.var_emit = prior_emit.copy()
+        self.var_init = prior_init
+        self.var_tran = prior_tran
+        self.var_emit = prior_emit
         #print("sigma_mf after initialization")
         #print(self.var_emit[0].sigma_mf)
 
@@ -162,8 +162,10 @@ class SVIHMM(VariationalHMMBase):
             # Mean-field update
             # Can we move this outside of the for-loop?
             tran_mf = self.prior_tran.copy()
+            #print("tran_mf before update: " + str(tran_mf))
             for t in range(1, self.T):
                 tran_mf += np.outer(self.var_x[:,t-1], self.var_x[:,t])
+            #print("tran_mf after update: " + str(tran_mf))
 
             # Convert result to natural params
             nats_t = np.squeeze(tran_mf[k,:] - 1.)
@@ -171,6 +173,7 @@ class SVIHMM(VariationalHMMBase):
             # Perform update according to stochastic gradient
             # (Hoffman, pg. 17)
             nats_new = (1.-lrate)*nats_old + lrate*nats_t
+            print("nats_new: " + str(nats_new))
             lrate *= 0.9
             #if(k==1): print("nats_new: " + str(nats_new))
 
@@ -180,8 +183,10 @@ class SVIHMM(VariationalHMMBase):
                 print("\nelement before assignment: " + str(self.var_tran[k][i]))
                 print("it should be: " + str(nats_new[i]+1.))
                 print(hasattr(self, "var_tran[k][i]"))
-                setattr(self, "var_tran[k][i]", nats_new[i]+1.)
-                self.var_tran[k][i] = nats_new[i] + 1.
+                #setattr(self, "var_tran[k][i]", nats_new[i]+1.)
+                temp_tran = self.var_tran
+                temp_tran[k][i] = nats_new[k] + 1.
+                self.var_tran = temp_tran
                 print("element after assignment: " + str(self.var_tran[k][i]) + "\n")
 
         # Emission distributions
