@@ -4,7 +4,7 @@ from numpy import random as rand
 from numpy.random import normal
 import pandas as pd
 import helper_funcs as hf
-import hmmsvi
+from pysvihmm import hmmsvi
 from pybasicbayes.distributions import gaussian
 import matplotlib
 from matplotlib import  pyplot as plt
@@ -19,7 +19,7 @@ stock_symbols = hf.get_stock_symbols(stock_data)
 single_stock = hf.stock_data_in_one_line(stock_data, stock_symbols, index)
 
 # break up stock data into train and test sets
-train_size = int(0.01*single_stock.size)
+train_size = int(0.1*single_stock.size)
 train_set = np.asarray(single_stock[:train_size])
 test_set = np.asarray(single_stock[train_size:])
 
@@ -44,11 +44,11 @@ obs_params = np.array([normal(loc=mu, scale=sigma, size=5),
                        normal(loc=mu, scale=sigma, size=5)])
 	
 # pi[0] is initial state distribution
-prior_tran = np.asarray(([1, 0, 0, 0, 0],
-               [0, 1, 0, 0, 0],
-               [0, 0, 1, 0, 0],
-               [0, 0, 0, 1, 0],
-               [0, 0, 0, 0, 1]))
+prior_tran = np.asarray(([1., 0., 0., 0., 0.],
+               [0., 1., 0., 0., 0.],
+               [0., 0., 1., 0., 0.],
+               [0., 0., 0., 1., 0.],
+               [0., 0., 0., 0., 1.]))
 
 sigma = [[sigma]]
 
@@ -72,25 +72,25 @@ obs_seq = model.generate_obs(single_stock[train_size:].shape[0])
 
 # inference step needs minibatches of data. Make them here.
 minibatches = np.ndarray((int(train_size/10), 10))
-print(train_size)
+#print(train_size)
 for i in range(int(train_size/10)):
     for j in range(10):
         minibatches[i][j] = train_set[10*i + j]
 
 # inference step
-print(type(model))
-model.infer(minibatches, maxit=1)
-print("prior_emit: " + str(model.prior_emit))
-print("prior_tran: " + str(model.prior_tran))
-print("prior_init: " + str(model.prior_init))
-print("var_emit: " + str(model.var_emit))
-print("var_tran: " + str(model.var_tran))
-print("var_init: " + str(model.var_init))
+#print(type(model))
+model.infer(minibatches, maxit=10)
+#print("prior_emit: " + str(model.prior_emit))
+#print("prior_tran: " + str(model.prior_tran))
+#print("prior_init: " + str(model.prior_init))
+#print("var_emit: " + str(model.var_emit))
+#print("var_tran: " + str(model.var_tran))
+#print("var_init: " + str(model.var_init))
 
 # generating observation sequence after svi step
 post_obs_seq = model.generate_obs(single_stock[train_size:].shape[0])
-print(post_obs_seq[0])
-print(post_obs_seq[1])
+#print(post_obs_seq[0])
+#print(post_obs_seq[1])
 
 # plotting
 plt.style.use('ggplot')
