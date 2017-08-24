@@ -118,26 +118,29 @@ class SVIHMM(VariationalHMMBase):
             print(it)
             #print(mb_gen.size/10)
             progress_bar = ["[          ]"]
-            i = 0
+            i = 1.
             for batch in mb_gen:
                 #print("sigma_mf before anything")
                 #print(self.var_emit[0].sigma_mf)
+                if(not np.all(np.linalg.eigvals(self.var_tran))):
+                    raise Exception("Not positive definite")
+                step = 1./i
                 self.local_update(batch)
-                self.global_update(batch)
+                self.global_update(step, batch)
 
                 #print(int(i/(mb_gen.size/10)+1))
                 #print("Iteration: " + str(it), '\r')
                 #print(str(progress_bar), '\r')
                 #if(i%(mb_gen.size/10) == 0):
                     #progress_bar[int(i/(mb_gen.size/10)+1)] = "X"
-                #i += 1
+                i += 1.
 
     # This must be implemented from hmmbase
-    def global_update(self, batch=None):
+    def global_update(self, step, batch=None):
         """ Perform global updates based on batch following the stochastic
             natural gradient.
         """
-        lrate = self.lrate
+        lrate = step
         # Perform stochastic gradient update on global params.
 
         # Initial state distribution -- basically skipping this for now because
@@ -180,17 +183,10 @@ class SVIHMM(VariationalHMMBase):
             # Convert results back to moment params
             #self.var_tran[:,k] = nats_new + 1.
             for i in range(self.K):
-                print("\nelement before assignment: " + str(self.var_tran[k][i]))
-                print("it should be: " + str(nats_new[i]+1.))
-                print(hasattr(self, "var_tran[k][i]"))
-                #setattr(self, "var_tran[k][i]", nats_new[i]+1.)
-                temp_tran = self.var_tran
-                temp_tran[k][i] = nats_new[k] + 1.
-                self.var_tran = temp_tran
-                print("element after assignment: " + str(self.var_tran[k][i]) + "\n")
+                self.var_tran[k][i] = nats_new[k] + 1.
 
         # Emission distributions
-        lrate = 0.1
+        lrate *= 0.5
         for k in range(self.K):
 
             G = self.var_emit[k]
@@ -209,8 +205,11 @@ class SVIHMM(VariationalHMMBase):
 
             # Perform update according to stochastic gradient
             # (Hoffman, pg. 17)
+            print("before update: ")
+            print(*nats_new)
             nats_new = (1.-lrate)*nats_old + lrate*nats_t
-            lrate *= 0.9
+            print("after update: ")
+            print(*nats_new)
 
             # Convert new params into moment form and store back in G
             pysvihmm.util.NIW_mf_moment_pars(G, *nats_new)
