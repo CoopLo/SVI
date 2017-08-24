@@ -37,11 +37,11 @@ prior_init = np.array([0.2, 0.2, 0.2, 0.2, 0.2])
 mu = np.asarray([np.mean(single_stock)])
 sigma = np.var(single_stock)**0.5
 #print(sigma.shape)
-obs_params = np.array([normal(loc=mu, scale=sigma, size=5),
-                       normal(loc=mu, scale=sigma, size=5),
-                       normal(loc=mu, scale=sigma, size=5),
-                       normal(loc=mu, scale=sigma, size=5),
-                       normal(loc=mu, scale=sigma, size=5)])
+#obs_params = np.array([normal(loc=mu, scale=sigma, size=5),
+                       #normal(loc=mu, scale=sigma, size=5),
+                       #normal(loc=mu, scale=sigma, size=5),
+                       #normal(loc=mu, scale=sigma, size=5),
+                       #normal(loc=mu, scale=sigma, size=5)])
 	
 # pi[0] is initial state distribution
 prior_tran = np.asarray(([1., 0., 0., 0., 0.],
