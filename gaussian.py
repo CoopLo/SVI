@@ -372,6 +372,7 @@ class Gaussian(
             x = np.reshape(x,(-1,D)) - mu_n  # x is now centered
             #xs = np.linalg.solve(self.sigma_mf_chol,x.T)
             xs = self.sigma_mf_chol
+            print("xs: " + str(xs))
 
             # see Eqs. 10.64, 10.67, and 10.71 in Bishop
             return self._loglmbdatilde()/2 - D/(2*kappa_n) - nu_n/2 * \
