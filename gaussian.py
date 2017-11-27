@@ -51,10 +51,8 @@ class _GaussianBase(object):
     @property
     def sigma_chol(self):
         if not hasattr(self,'_sigma_chol') or self._sigma_chol is None:
-            #print(np.linalg.cholesky(self.sigma))
-            #self._sigma_chol = np.linalg.cholesky(self.sigma)
-            self._sigma_chol = np.array(self.sigma)
-            #print(self._sigma_chol)
+            #print("debugging this now:" + str(type(self.sigma[0])))
+            self._sigma_chol = np.linalg.cholesky(self.sigma.astype("float64"))
         return self._sigma_chol
 
     ### distribution stuff
@@ -159,9 +157,12 @@ class Gaussian(
 
     def __init__(
             self, mu=None, sigma=None,
-            mu_0=np.array([[1]]), sigma_0=np.array([[1]]), kappa_0=1, nu_0=1):
+            mu_0=None, 
+            sigma_0=None, 
+            kappa_0=1, nu_0=4):
 
         self.mu = mu
+        #print("I swear to fucking god:" + str(sigma))
         self.sigma = sigma
 
         self.mu_0 = mu_0
@@ -172,6 +173,7 @@ class Gaussian(
         self.kappa_mf = kappa_0
         self.nu_0 = nu_0
         self.nu_mf = nu_0
+        #print("sigma:??????" + str(self.sigma))
 
         # NOTE: resampling will set mu_mf and sigma_mf if necessary
         #if mu is sigma is None \
@@ -351,15 +353,25 @@ class Gaussian(
 
         # see Eq. 10.77 in Bishop
         q_entropy = -0.5 * (loglmbdatilde + D * (np.log(self.kappa_mf/(2*np.pi))-1)) \
-            + invwishart_entropy(self.sigma_mf,self.nu_mf)
+            + invwishart_entropy(self.sigma_mf,self.nu_mf,self.sigma_chol)
         # see Eq. 10.74 in Bishop, we aren't summing over K
+        #print("sigma_mf\n" + str(type(self.sigma_mf)))
+        #print("sigma_0\n" + str(type(self.sigma_0)))
+        #print("nu_0: " + str(self.nu_0))
+        #print("mu_mf: " + str(self.mu_mf))
+        #print("loglmbdatilde: " + str(loglmbdatilde))
+        #print("D: " + str(D))
+        #print("something: " + str(np.linalg.solve(self.sigma_mf.astype(np.float64),
+                                  #self.mu_mf.astype(np.float64)-self.mu_0.astype(np.float64))))
         p_avgengy = 0.5 * (D * np.log(self.kappa_0/(2*np.pi)) + loglmbdatilde
             - D*self.kappa_0/self.kappa_mf - self.kappa_0*self.nu_mf*
             np.dot(self.mu_mf -
-                self.mu_0,np.linalg.solve(self.sigma_mf,self.mu_mf - self.mu_0))) \
+                self.mu_0,np.linalg.solve(self.sigma_mf.astype(np.float64),
+                          self.mu_mf.astype(np.float64) - self.mu_0.astype(np.float64)))) \
             + invwishart_log_partitionfunction(self.sigma_0,self.nu_0) \
             + (self.nu_0 - D - 1)/2*loglmbdatilde - 1/2*self.nu_mf \
-            * np.linalg.solve(self.sigma_mf,self.sigma_0).trace()
+            * np.linalg.solve(self.sigma_mf.astype(np.float64),
+                              self.sigma_0.astype(np.float64)).trace()
 
         return p_avgengy + q_entropy
 
@@ -369,14 +381,19 @@ class Gaussian(
         if x is not None:
             mu_n, kappa_n, nu_n = self.mu_mf, self.kappa_mf, self.nu_mf
             D = len(mu_n)
+            #print("mu: " + str(mu_n))
+            #print("x: " + str(x))
             x = np.reshape(x,(-1,D)) - mu_n  # x is now centered
             #xs = np.linalg.solve(self.sigma_mf_chol,x.T)
+            #print("sigma_mf_chol: " + str(self.sigma_mf_chol))
             xs = self.sigma_mf_chol
-            print("xs: " + str(xs))
+            #print("xs: " + str(xs))
 
             # see Eqs. 10.64, 10.67, and 10.71 in Bishop
+            #print("I really hope not: " + str(self._loglmbdatilde()))
+            #print(type(xs))
             return self._loglmbdatilde()/2 - D/(2*kappa_n) - nu_n/2 * \
-                inner1d(xs,xs) - D/2*np.log(2*np.pi)
+                inner1d(xs.astype(np.float64),xs.astype(np.float64)) - D/2*np.log(2*np.pi)
         else:
             D = self.mu_mf.shape[0]
 
@@ -409,9 +426,12 @@ class Gaussian(
     def _loglmbdatilde(self):
         # see Eq. 10.65 in Bishop
         D = len(self.mu_0)
-        chol = self.sigma_mf_chol
+        chol = self.sigma_mf_chol.astype('float64') # local step changes type somewhere
+
+        #print(type(chol.diagonal()[0]))
+        
         return special.digamma((self.nu_mf-np.arange(D))/2.).sum() \
-            + D*np.log(2) - 2*np.log(chol).sum()
+            + D*np.log(2) - 2 * sum(np.log(chol.diagonal()))
 
     ### Collapsed
 

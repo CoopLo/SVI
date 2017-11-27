@@ -1,4 +1,3 @@
-#import hmm
 import numpy as np
 from numpy import random as rand
 from numpy.random import normal
@@ -8,11 +7,11 @@ from pysvihmm import hmmsvi, hmmsgd_metaobs
 from pybasicbayes.distributions import gaussian
 import matplotlib
 from matplotlib import  pyplot as plt
+from pysvihmm import PositiveDefiniteException as PDE
 
 debug = True
-components = 4
-mixtures = 5
 index = 100
+
 # read in data
 stock_data = pd.read_csv("../data/mquote201010.csv")
 stock_symbols = hf.get_stock_symbols(stock_data)
@@ -30,55 +29,12 @@ test_index = [i for i in range(test_set.size)]
 
 # putting two dimensions together into columns
 test_data = np.column_stack([test_index, test_set])
-
-# fitting the model
-prior_init = np.array([0.2, 0.2, 0.2, 0.2, 0.2])
-
-# observation parameters
-mu = np.asarray([np.mean(single_stock)])
-sigma = np.var(single_stock)**0.5
-
-prior_tran = np.asarray(([0., 0., 0., 0., 0.],
-               [0., 0., 0., 0., 0.],
-               [0., 0., 0., 0., 0.],
-               [0., 0., 0., 0., 0.],
-               [0., 0., 0., 0., 0.]))
-
-state=0
-# get prior_tran from data
-for i in range(1, train_size):
-    if(train_data[i] < (1.0025*train_data[i-1]) and train_data[i] > (0.9975*train_data[i-1])):
-        prior_tran[0][state] += 1
-        state = 0
-    elif(train_data[i] >= (1.0025*train_data[i-1]) and train_data[i] < (1.01*train_data[i-1])):
-        prior_tran[1][state] += 1
-        state = 1
-    elif(train_data[i] >= (1.01*train_data[i-1])):
-        prior_tran[2][state] += 1
-        state = 2
-    elif(train_data[i] <= (0.9975*train_data[i-1]) and train_data[i] > (0.99*train_data[i-1])):
-        prior_tran[3][state] += 1
-        state = 3
-    elif(train_data[i] <= (0.99*train_data[i-1])):
-        prior_tran[4][state] += 1
-        state = 4
-
-
-for i in range(5):
-    for j in range(5):
-        #print("prior_tran["+str(i)+"]["+str(j)+"]: " + str(prior_tran[i][j]))
-        prior_tran[i][j] = float(prior_tran[i][j])/train_size
-
-#print(str(prior_tran))
 train_data = np.column_stack([train_index, train_set])
-
-#sigma = [[sigma]]
-#sigma = np.cov(train_data)
-#print(sigma)
 
 # PARAMETERS FOR GAUSSIAN, TAKEN FROM TEST FILE
 kappa_0 = 1
 nu_0 = 4
+
 # prior emissions are gaussian
 prior_emit = [gaussian.Gaussian(mu = np.array([0,0,0,0,0]), 
                                 sigma = np.eye(5),
@@ -112,6 +68,7 @@ prior_emit = [gaussian.Gaussian(mu = np.array([0,0,0,0,0]),
 obs = np.array([prior_emit[int(np.round(4*i/train_set.size))].rvs()[0]
                 for i in range(train_set.size)])
 
+# set up parameters with intent to burn in
 mu_0 = np.zeros(5)
 sigma_0 = 0.75 * np.cov(obs.T)
 kappa_0 = 0.01
@@ -120,25 +77,37 @@ prior_emit = [gaussian.Gaussian(sigma = np.eye(5), mu = np.array([_,_,_,_,_]),
                 mu_0=mu_0, sigma_0=sigma_0, kappa_0=kappa_0, nu_0=nu_0)
               for _ in range(5)]
 prior_emit = np.array(prior_emit)
+prior_init = np.ones(5)
+prior_tran = np.ones((5,5))
+
+# instantiate model
 model = hmmsgd_metaobs.VBHMM(obs = single_stock[:train_size],
                              prior_init = prior_init,
                              prior_tran = prior_tran,
                              prior_emit = prior_emit,
                              mb_sz = 50,
                              verbose = True)
-print(prior_tran)
+
 print("Model has been instantiated")
 
-# inference step needs minibatches of data. Make them here.
-buffer_length = 10
-minibatches = np.ndarray((int(train_size/50), 50))
-for i in range(int(train_size/50)):
-    for j in range(50):
-        minibatches[i][j] = train_set[50*i + j]
-    #print(str(minibatches[i]))
-
-# inference step
-model.infer()
+# inference step is unstable. Try until it works
+worked = False 
+iteration = 0
+while not(worked):
+    try:
+        iteration += 1
+        print("iteration: {}".format(iteration))
+        model = hmmsgd_metaobs.VBHMM(obs = single_stock[:train_size],
+                             prior_init = prior_init,
+                             prior_tran = prior_tran,
+                             prior_emit = prior_emit,
+                             mb_sz = 50,
+                             verbose = True)
+        model.infer()
+        worked = True
+    except PDE.PositiveDefiniteException:
+        pass
+    
 
 # plotting
 plt.style.use('ggplot')

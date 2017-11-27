@@ -8,6 +8,9 @@ import numpy as np
 import numpy.linalg as npl
 import scipy.spatial.distance as distance
 
+# NEED LAMBDA FUNCTION TO SET FORMAT
+np.set_printoptions(formatter={})
+
 
 def NIW_zero_nat_pars(G):
     p = len(G.mu_mf)
@@ -47,7 +50,10 @@ def NIW_mf_moment_pars(G, e1, e2, e3, e4):
     # This may be wrong, but  bnpy/distr/GaussWishDistr.py uses it and it's
     # actually stable.
     #sigma = e3 - np.outer(mu, mu) / kappa
-    sigma = e3 - np.outer(mu, mu) * kappa
+    #sigma = e3 - np.outer(mu, mu) * kappa
+    sigma = e3/e2 - np.outer(mu,mu)
+    #print("\n\nupdated sigma:\n" + str(sigma))
+    #print("\nnew sigma_chol: " + str(np.linalg.cholesky(sigma)))
     nu = e4 - 2 - p
 
     G.mu_mf = mu
@@ -57,7 +63,15 @@ def NIW_mf_moment_pars(G, e1, e2, e3, e4):
 
     # Just to match the meanfieldupdate function
     G.mu = G.mu_mf
+    #print("denominator: " + str(G.nu_mf - p - 1))
     G.sigma = G.sigma_mf/(G.nu_mf - p - 1)  # for plotting
+
+    maybe_this = np.zeros((5,5))
+    for i in range(5):
+        for j in range(5):
+            maybe_this[i][j] = G.sigma[i][j]
+    G.sigma = np.asarray(maybe_this)
+    #print("eigenvalues: " + str(np.linalg.eig(maybe_this)))
 
 
 def NIW_meanfield(G, data, weights):
