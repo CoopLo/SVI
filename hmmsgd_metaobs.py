@@ -423,7 +423,6 @@ class VBHMM(VariationalHMMBase):
             for data in minibatch:
 
                 self.cur_mo = data
-
                 # Compuate stationary distribution of mean of distribution for
                 # current transition matrix.  We'll use this to initialize the
                 # first and last observation in the forwards and backwards
@@ -462,8 +461,9 @@ class VBHMM(VariationalHMMBase):
             try:
                 self.global_update(A_inter, emit_inter, it)
                 worked = True
-            except PDE.PositiveDefiniteException:
-                raise PDE.PositiveDefiniteException
+            except PDE.PositiveDefiniteException as pde:
+                raise PDE.PositiveDefiniteException(pde.iteration, pde.symmetric,
+                                                    pde.positive_definite)
             #self.global_update(A_inter, emit_inter, it)
             #print("doesn't get to here")
 
@@ -1128,7 +1128,8 @@ class VBHMM(VariationalHMMBase):
                                          all(np.linalg.eigvals(sig)>0)
 
                     symmetric = np.allclose(sig, sig.T)
-                    raise PDE.PositiveDefiniteException("Not PositiveDefinite bruv")
+                    raise PDE.PositiveDefiniteException(iteration, symmetric, 
+                                                        positive_definite)
             '''
 	        If not positive definite, find closest one that is based on some distance
             '''
