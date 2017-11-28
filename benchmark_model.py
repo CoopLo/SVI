@@ -111,7 +111,7 @@ for iteration in range(trials):
 
         sys.stdout.write('\r')
         sys.stdout.write("[%-40s] %d%%" % ('='*int(40*iteration/trials), 
-                                           float(100)/trials*iteration))
+                                           float(1000)/trials*iteration))
         sys.stdout.flush()
         
         model = hmmsgd_metaobs.VBHMM(obs = single_stock[:train_size],
@@ -124,7 +124,7 @@ for iteration in range(trials):
         model.infer()
 
 
-        worked = True
+        break
     except PDE.PositiveDefiniteException as pde:
         num_iter[pde.iteration] += 1
         if(pde.iteration > 0):
