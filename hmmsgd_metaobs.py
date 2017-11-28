@@ -300,7 +300,6 @@ class VBHMM(VariationalHMMBase):
         emit_vlb = 0.
         for k in range(self.K):
             emit_vlb += self.var_emit[k].get_vlb()
-        #print(emit_vlb.sum())
 
         return A_energy + A_entropy + emit_vlb
 
@@ -458,18 +457,15 @@ class VBHMM(VariationalHMMBase):
                 lb += self.local_lower_bound()
 
             # Global update for this mini batch
-            print("gets to here.....")
+            #print("gets to here.....")
             works = False
-            attempt = 50
-            while(not(works) and attempt >= 0):
-                try:
-                    attempt -= 1
-                    self.global_update(A_inter, emit_inter)
-                    worked = True
-                except PDE.PositiveDefiniteException:
-                    pass
-            self.global_update(A_inter, emit_inter)
-            print("doesn't get to here")
+            try:
+                self.global_update(A_inter, emit_inter, it)
+                worked = True
+            except PDE.PositiveDefiniteException:
+                raise PDE.PositiveDefiniteException
+            #self.global_update(A_inter, emit_inter, it)
+            #print("doesn't get to here")
 
             self.iter_time[it] = time.time() - start_time
 
@@ -1052,7 +1048,7 @@ class VBHMM(VariationalHMMBase):
 
         return A_inter, emit_inter
 
-    def global_update(self, A_inter, emit_inter):
+    def global_update(self, A_inter, emit_inter, iteration):
         """ Perform global updates based on batch following the stochastic
             natural gradient.
 
@@ -1123,16 +1119,16 @@ class VBHMM(VariationalHMMBase):
                     #print("\nsigma_chol {} matrix\n".format(k) + 
                           #str(self.var_emit[k].sigma_chol))
                     sig = self.var_emit[k].sigma_chol
+                    #print("Sigma good to go: " + str(sig))
                 except:
-                    #sig = self.var_emit[k].sigma
+                    sig = self.var_emit[k].sigma
                     #print("\n\nMatrix isn't positive definite line 1108\n\n")
 
-                    #print("positive definite: " + 
-                          #str(not(all(np.iscomplex(np.linalg.eigvals(sig)))) and
-                              #all(np.linalg.eigvals(sig)>0)))
+                    positive_definite = not(all(np.iscomplex(np.linalg.eigvals(sig)))) and \
+                                         all(np.linalg.eigvals(sig)>0)
 
-                    #print("Is symmetrix: " + str(np.allclose(sig, sig.T)))
-                    raise PDE.PositiveDefiniteException("Not Hermition Positive Definite")
+                    symmetric = np.allclose(sig, sig.T)
+                    raise PDE.PositiveDefiniteException("Not PositiveDefinite bruv")
             '''
 	        If not positive definite, find closest one that is based on some distance
             '''
